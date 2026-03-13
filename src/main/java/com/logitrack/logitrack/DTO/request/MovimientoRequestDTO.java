@@ -12,6 +12,9 @@ public record MovimientoRequestDTO(
         Long bodegaOrigenId,
         Long bodegaDestinoId,
 
+        @NotBlank(message = "El email del usuario no puede estar vacío")
+        String emailUsuario,
+
         @Size(max = 500, message = "La observación no puede superar 500 caracteres")
         String observacion,
 
