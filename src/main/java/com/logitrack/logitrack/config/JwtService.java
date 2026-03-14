@@ -17,13 +17,24 @@ public class JwtService {
         return Keys.hmacShaKeyFor(SECRET.getBytes());
     }
 
-    public String generateToken(String username) {
+    public String generateToken(String username, String rol) { // Agregamos el rol como parámetro
         return Jwts.builder()
                 .setSubject(username)
+                .claim("rol", rol) // <-- Guardamos el rol en el token
                 .setIssuedAt(new Date())
                 .setExpiration(new Date(System.currentTimeMillis() + EXPIRATION))
                 .signWith(getKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    // Y agrega este método para extraerlo:
+    public String extractRol(String token) {
+        return Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody()
+                .get("rol", String.class);
     }
 
     public String validateToken(String token) {

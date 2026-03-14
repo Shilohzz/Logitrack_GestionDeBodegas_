@@ -4,11 +4,13 @@ import jakarta.servlet.*;
 import jakarta.servlet.http.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -28,11 +30,13 @@ public class JwtFilter extends GenericFilter {
             String username = jwtService.validateToken(token);
 
             if (username != null) {
+                String rol = jwtService.extractRol(token); // aquí extraigo el rol, del token.
+
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
                                 username,
                                 null,
-                                Collections.emptyList()
+                                List.of(new SimpleGrantedAuthority(rol)) // <-- Aquí le doy la "autoridad" de hacer las peticiones que quiera según el rol (ADMIN, correcto).
                         );
                 SecurityContextHolder.getContext().setAuthentication(auth);
             }
