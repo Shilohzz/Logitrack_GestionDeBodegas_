@@ -31,10 +31,23 @@ public class SecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/login").permitAll()
+
+                        // Solo un ADMIN puede acceder a estas rutas y utilizarlas
                         .requestMatchers("/auth/register").hasAuthority("ADMIN")
+                        .requestMatchers("/api/usuario/**").hasAuthority("ADMIN")
+
+                        // Aquí limito la manipulación de endpoints en Cliente y Usuario, únicamente para el ADMIN.
+                        .requestMatchers(HttpMethod.POST, "/api/cliente/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/cliente/**").hasAuthority("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/cliente/**").hasAuthority("ADMIN")
+                        // Al empleado solo lo dejo ver la info de las personas que tengo en el sistema
+                        .requestMatchers(HttpMethod.GET, "/api/cliente/**").hasAnyAuthority("ADMIN", "EMPLEADO")
+
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         .requestMatchers("/", "/index.html", "/css/**", "/js/**", "/view/**").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+
+                        // Todo lo demás (Productos, Bodegas, Movimientos, Inventario) queda abierto para ambos
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)

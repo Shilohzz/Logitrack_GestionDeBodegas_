@@ -4,6 +4,8 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -29,7 +31,7 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // 400 Validaciones de los DTOs (@NotNull, @NotBlank, @Size...)
+    // 400 Validaciones de los DTOs (@NotNull, @NotBlank, etc)
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationErrors(MethodArgumentNotValidException ex) {
         Map<String, Object> response = new HashMap<>();
@@ -45,7 +47,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
-    // 400  Si se violan las reglas de negocio
+    // 400 Si se violan las reglas de negocio
     @ExceptionHandler(BusinessRuleException.class)
     public ResponseEntity<ErrorResponse> handleBusinessRule(BusinessRuleException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -57,7 +59,31 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // 400 por si el JSON está mal estructurado
+    // 403 FORBIDDEN si el rol no tiene permiso
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new ErrorResponse(
+                        LocalDateTime.now(),
+                        HttpStatus.FORBIDDEN.value(),
+                        "No tienes permisos suficientes para realizar esta acción.",
+                        "ACCESS_DENIED"
+                ));
+    }
+
+    // 401 si el token expiró o es inválido
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationError(AuthenticationException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(new ErrorResponse(
+                        LocalDateTime.now(),
+                        HttpStatus.UNAUTHORIZED.value(),
+                        "Credenciales inválidas o token expirado.",
+                        "UNAUTHORIZED"
+                ));
+    }
+
+    // 400 por si el JSON está mal
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleParsingErrors(HttpMessageNotReadableException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -93,4 +119,3 @@ public class GlobalExceptionHandler {
                 ));
     }
 }
-
